@@ -36,6 +36,8 @@ namespace InterakcniOverlayAvatar
             // Otevření a zavření okna (začátek a konec odposlechu)
             this.Loaded += MainWindow_Loaded;
             this.Closed += MainWindow_Closed;
+
+            this.StateChanged += MainWindow_StateChanged;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -55,10 +57,15 @@ namespace InterakcniOverlayAvatar
         {
             activityCount++;
 
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(new Action(() =>
             {
                 ActivityText.Text = $"Aktivita: {activityCount}";
-            });
+            }));
+        }
+
+        public void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (this.WindowState == WindowState.Minimized) this.WindowState = WindowState.Maximized;
         }
     }
 }
