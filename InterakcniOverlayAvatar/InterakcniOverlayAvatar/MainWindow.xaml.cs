@@ -21,10 +21,44 @@ namespace InterakcniOverlayAvatar
 {
     public partial class MainWindow : Window
     {
+        // Definice instance třídy GlobalHook
+        GlobalHook odposlech;
+
+        int activityCount = 0;
+
         public MainWindow()
         {
             InitializeComponent();
 
+            // Vytvoření instance třídy GlobalHook
+            odposlech = new GlobalHook(this);
+
+            // Otevření a zavření okna (začátek a konec odposlechu)
+            this.Loaded += MainWindow_Loaded;
+            this.Closed += MainWindow_Closed;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            odposlech.Start();
+        }
+
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            odposlech.Stop();
+
+            // ukončit celý proces
+            Environment.Exit(0);
+        }
+
+        public void ZaznamenejAktivitu()
+        {
+            activityCount++;
+
+            Dispatcher.Invoke(() =>
+            {
+                ActivityText.Text = $"Aktivita: {activityCount}";
+            });
         }
     }
 }
