@@ -16,18 +16,25 @@
         >
 
     <Canvas>
-        <StackPanel Canvas.Left="100" Canvas.Top="100">
-            <TextBlock
-                Text="Avatar Activity"
-                FontSize="24"
-                Foreground="White"
-            />
-            <TextBlock
-                x:Name="ActivityText"
-                Text="Aktivita: 0"
-                FontSize="20"
-                Foreground="White"
-            />
+        <StackPanel x:Name="PohybliveOkno" Canvas.Left="100" Canvas.Top="100" Width="200" >
+            <Border Width="200" Height="200" ClipToBounds="True">
+                <Image x:Name="AvatarImage"
+                   Stretch="UniformToFill"
+                   Source="/avatars/1_up.png" />
+            </Border>
+
+            <Border Background="White" Padding="10" Margin="0,5,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="ActivityText" Text="0" Foreground="Black" FontSize="20" VerticalAlignment="Center" FontWeight="Bold" />
+
+                    <Button Grid.Column="1" Content="☰" FontSize="18" Width="30" Height="30" Click="MenuButton_Click" Cursor="Hand" Background="White" BorderBrush="Black" BorderThickness="1" />
+                </Grid>
+            </Border>
         </StackPanel>
     </Canvas>
 </Window>

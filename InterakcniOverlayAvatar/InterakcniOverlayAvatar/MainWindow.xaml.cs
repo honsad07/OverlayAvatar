@@ -49,23 +49,41 @@ namespace InterakcniOverlayAvatar
         {
             odposlech.Stop();
 
-            // ukončit celý proces
+            // Ukončit celý proces
             Environment.Exit(0);
+        }
+
+        public void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (this.WindowState == WindowState.Minimized) this.WindowState = WindowState.Maximized;
         }
 
         public void ZaznamenejAktivitu()
         {
             activityCount++;
 
-            Dispatcher.BeginInvoke(new Action(() =>
+            Dispatcher.BeginInvoke(new Action(async () =>
             {
-                ActivityText.Text = $"Aktivita: {activityCount}";
+                if (activityCount % 2 == 0)
+                {
+                    AvatarImage.Source = new BitmapImage(new Uri("/avatars/1_rd.png", UriKind.Relative));
+                    await Task.Delay(100);
+                    AvatarImage.Source = new BitmapImage(new Uri("/avatars/1_up.png", UriKind.Relative));
+                }
+                else
+                {
+                    AvatarImage.Source = new BitmapImage(new Uri("/avatars/1_ld.png", UriKind.Relative));
+                    await Task.Delay(100);
+                    AvatarImage.Source = new BitmapImage(new Uri("/avatars/1_up.png", UriKind.Relative));
+                }
+
+                ActivityText.Text = activityCount.ToString();
             }));
         }
 
-        public void MainWindow_StateChanged(object sender, EventArgs e)
+        public void MenuButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.WindowState == WindowState.Minimized) this.WindowState = WindowState.Maximized;
+            MessageBox.Show("Tady se otevře menu!");
         }
     }
 }
