@@ -12,9 +12,21 @@ namespace InterakcniOverlayAvatar
     {
         // Konstanta pro záchyt klávesnice
         const int WH_KEYBOARD_LL = 13;
+        const int WH_MOUSE_LL = 14;
 
+        // Stisk klávesnice
         const int WM_KEYDOWN = 0x0100;
         const int WM_SYSKEYDOWN = 0x0104;
+
+        // Opuštění klávesnice (držení jinak rapidně inkrementuje)
+        const int WM_KEYUP = 0x0101;
+        const int WM_SYSKEYUP = 0x0105;
+
+        // Stisk myši
+        const int WM_LBUTTONDOWN = 0x0201;
+        const int WM_MBUTTONDOWN = 0x0207;
+        const int WM_RBUTTONDOWN = 0x0204;
+
 
         // --- P/Invoke ---
         // Funkce k zapnutí odposlechu
@@ -26,8 +38,8 @@ namespace InterakcniOverlayAvatar
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool UnhookWindowsHookEx(IntPtr hhk);
 
-        // Zjistí jméno programu
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        // Zjistí jméno programu, nepatří do user32.dll!
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern IntPtr GetModuleHandle(string lpModuleName);
 
         // Funkce pro předání zprávy dál, aby se nezasekl systém
@@ -39,17 +51,23 @@ namespace InterakcniOverlayAvatar
         delegate IntPtr LowLevelHookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
 
-        IntPtr keyboardHookId = IntPtr.Zero; // Potvrzuje zapnutí odposlechu
-        // Proměnná aby garbage collector nesmazal funkc
+        // Potvrzuje zapnutí odposlechu
+        IntPtr keyboardHookId = IntPtr.Zero;
+        IntPtr mouseHookId = IntPtr.Zero;
+
+        // Proměnná aby garbage collector nesmazal funkci
         LowLevelHookProc keyboardProc;
+        LowLevelHookProc mouseProc;
 
         // Odkaz na okno programu
         MainWindow okno;
+        List<int> drzeneKlavesy = new List<int>();
 
         public GlobalHook(MainWindow hlavniOkno)
         {
             okno = hlavniOkno;
             keyboardProc = HookCallbackKeyboard;
+            mouseProc = HookCallbackMouse;
         }
 
         public void Start()
@@ -62,6 +80,7 @@ namespace InterakcniOverlayAvatar
 
                 // Zapnutí odposlechu
                 keyboardHookId = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardProc, handleModulu, 0);
+                mouseHookId = SetWindowsHookEx(WH_MOUSE_LL, mouseProc, handleModulu, 0);
             }
         }
 
@@ -69,6 +88,7 @@ namespace InterakcniOverlayAvatar
         {
             // Vypnutí odposlechu
             UnhookWindowsHookEx(keyboardHookId);
+            UnhookWindowsHookEx(mouseHookId);
         }
 
         private IntPtr HookCallbackKeyboard(int nCode, IntPtr wParam, IntPtr lParam)
@@ -76,14 +96,40 @@ namespace InterakcniOverlayAvatar
             // Zda je platná zpráva systému
             if (nCode >= 0)
             {
+                int idKlavesy = Marshal.ReadInt32(lParam);
+
                 if (wParam == (IntPtr)(WM_KEYDOWN) || wParam == (IntPtr)(WM_SYSKEYDOWN))
                 {
-                    okno.ZaznamenejAktivitu();
+                    if (!drzeneKlavesy.Contains(idKlavesy))
+                    {
+                        drzeneKlavesy.Add(idKlavesy);
+                        okno.ZaznamenejAktivitu();
+                    }
+                }
+                else if (wParam == (IntPtr)WM_KEYUP || wParam == (IntPtr)WM_SYSKEYUP)
+                {
+                    // Opuštění klávesy
+                    drzeneKlavesy.Remove(idKlavesy);
                 }
             }
 
             // Vrací stisknutou klávesu
             return CallNextHookEx(keyboardHookId, nCode, wParam, lParam);
+        }
+
+        private IntPtr HookCallbackMouse(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            // Zda je platná zpráva systému
+            if (nCode >= 0)
+            {
+                if (wParam == (IntPtr)(WM_LBUTTONDOWN) || wParam == (IntPtr)(WM_RBUTTONDOWN) || wParam == (IntPtr)(WM_MBUTTONDOWN))
+                {
+                    okno.ZaznamenejAktivitu();
+                }
+            }
+
+            // Předává zprávu dalším programům v systému
+            return CallNextHookEx(mouseHookId, nCode, wParam, lParam);
         }
     }
 }
